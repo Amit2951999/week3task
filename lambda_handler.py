@@ -7,6 +7,7 @@ from botocore.exceptions import ClientError
 client = boto3.resource("dynamodb")
 s3 = boto3.client('s3')
 glue = boto3.client('glue')
+athena = boto3.client('athena')
 
 
 def lambda_handler(event, context):
@@ -31,6 +32,20 @@ def lambda_handler(event, context):
         if glue_job_json_to_csv("csvToJsonJob") == "SUCCEEDED":  # start crawler if glue job is successful
             response = glue.start_crawler(Name='week3crawler')
             print(json.dumps(response, indent=4))  # to print json representation data of the db
+
+            # to start athena query
+            athena.start_query_execution(
+                QueryString='CREATE OR REPLACE VIEW view_name AS '
+                            'SELECT id, first_name, last_name, date_of_birth, gender '
+                            'FROM ' + f_extension[0],  # f_extension[0] is name of the file
+                QueryExecutionContext={
+                    'Database': 'week3db'
+                },
+                ResultConfiguration={
+                    'OutputLocation': 's3://week3-athena-output/',
+                }
+            )
+
         else:
             print("Glue Job Failed")
 
@@ -40,6 +55,20 @@ def lambda_handler(event, context):
         if glue_job_json_to_csv("csvToJsonJob") == "SUCCEEDED":  # start crawler if glue job is successful
             response = glue.start_crawler(Name='week3crawler')
             print(json.dumps(response, indent=4))  # to print json representation data of the db
+
+            # to start athena query
+            athena.start_query_execution(
+                QueryString='CREATE OR REPLACE VIEW view_name AS '
+                            'SELECT id, first_name, last_name, date_of_birth, gender '
+                            'FROM ' + f_extension[0],  # f_extension[0] is name of the file
+                QueryExecutionContext={
+                    'Database': 'week3db'
+                },
+                ResultConfiguration={
+                    'OutputLocation': 's3://week3-athena-output/',
+                }
+            )
+
         else:
             print("Glue Job Failed")
 
