@@ -8,6 +8,7 @@ client = boto3.resource("dynamodb")
 s3 = boto3.client('s3')
 glue = boto3.client('glue')
 athena = boto3.client('athena')
+sns_client = boto3.client('sns')
 
 
 def lambda_handler(event, context):
@@ -39,15 +40,17 @@ def lambda_handler(event, context):
                             'SELECT id, first_name, last_name, date_of_birth, gender '
                             'FROM ' + f_extension[0],  # f_extension[0] is name of the file
                 QueryExecutionContext={
-                    'Database': 'week3db'
-                },
+                    'Database': 'week3db'},
                 ResultConfiguration={
-                    'OutputLocation': 's3://week3-athena-output/',
-                }
+                    'OutputLocation': 's3://week3-athena-output/', }
             )
 
         else:
             print("Glue Job Failed")
+            # sending alert message from SNS to subscribed e-mail ids
+            sns_client.publish(TopicArn='arn:aws:sns:us-east-1:747811223119:gluejob-alert',
+                               Message='Alert!! Glue Job Failed',
+                               Subject='Glue Job Failed')
 
     elif size < int(load_data["Items"][0]['size']) and f_extension[-1] == load_data["Items"][0]['configid2']:
         glue_job_json_to_csv("csvToJsonJob")  # to start the job
@@ -62,15 +65,17 @@ def lambda_handler(event, context):
                             'SELECT id, first_name, last_name, date_of_birth, gender '
                             'FROM ' + f_extension[0],  # f_extension[0] is name of the file
                 QueryExecutionContext={
-                    'Database': 'week3db'
-                },
+                    'Database': 'week3db'},
                 ResultConfiguration={
-                    'OutputLocation': 's3://week3-athena-output/',
-                }
+                    'OutputLocation': 's3://week3-athena-output/', }
             )
 
         else:
             print("Glue Job Failed")
+            # sending alert message from SNS to subscribed e-mail ids
+            sns_client.publish(TopicArn='arn:aws:sns:us-east-1:747811223119:gluejob-alert',
+                               Message='Alert!! Glue Job Failed',
+                               Subject='Glue Job Failed')
 
 
 def glue_job_csv_to_json(job_name):
